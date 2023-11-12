@@ -38,7 +38,7 @@ var m = Mysql{
 
 func main() {
 	DB = GormMysql()
-	TimerFunc()
+	//TimerFunc()
 	if DB != nil {
 		//RegisterTables()
 		//程序结束前关闭数据库链接
@@ -50,8 +50,8 @@ func main() {
 			}
 		}(db)
 	}
-	select {}
-	//StartHttpServer()
+	//select {}
+	StartHttpServer()
 }
 
 func StartHttpServer() {

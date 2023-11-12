@@ -45,6 +45,7 @@ func GetGPT4Account() MailAccount {
 func chatCompletions(c *gin.Context) {
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {
+		fmt.Println("参数缺失，Missing header parameter Authorization")
 		c.JSON(401, gin.H{"error": gin.H{
 			"message": "missing header parameter Authorization",
 			"type":    "invalid_request_error",
@@ -56,6 +57,7 @@ func chatCompletions(c *gin.Context) {
 	customAccessToken := strings.Replace(authHeader, "Bearer ", "", 1)
 	// Check if customAccessToken starts with sk-
 	if !strings.HasPrefix(customAccessToken, "E4k3xbrEDtMjYMyuQwwd02BffKG6WugI") {
+		fmt.Println("参数不对，Wrong header parameter Authorization")
 		c.JSON(401, gin.H{"error": gin.H{
 			"message": "missing header parameter Authorization",
 			"type":    "invalid_request_error",
@@ -68,6 +70,7 @@ func chatCompletions(c *gin.Context) {
 	var originalRequest APIRequest
 	err := c.BindJSON(&originalRequest)
 	if err != nil {
+		fmt.Println("Request must be proper JSON")
 		c.JSON(400, gin.H{"error": gin.H{
 			"message": "Request must be proper JSON",
 			"type":    "invalid_request_error",
@@ -79,6 +82,7 @@ func chatCompletions(c *gin.Context) {
 	account := GetGPT4Account()
 	puid := account.OpenaiPuid
 	if puid == "" {
+		fmt.Println("数据库缺失，Missing header parameter PUid")
 		c.JSON(400, gin.H{"error": gin.H{
 			"message": "missing header parameter PUid",
 			"type":    "invalid_request_error",
@@ -89,6 +93,7 @@ func chatCompletions(c *gin.Context) {
 	}
 	accessToken := account.OpenaiAccessToken
 	if accessToken == "" {
+		fmt.Println("数据库缺失，Missing header parameter Authorization")
 		c.JSON(400, gin.H{"error": gin.H{
 			"message": "wrong header parameter Authorization",
 			"type":    "invalid_request_error",
@@ -103,6 +108,7 @@ func chatCompletions(c *gin.Context) {
 
 	response, err := POSTConversation(translatedRequest, accessToken, puid, proxyUrl)
 	if err != nil {
+		fmt.Println("POSTConversation出错了,Error sending request")
 		c.JSON(500, gin.H{
 			"error": "error sending request",
 		})
@@ -129,6 +135,7 @@ func chatCompletions(c *gin.Context) {
 		translatedRequest.ParentMessageID = continueInfo.ParentID
 		response, err = POSTConversation(translatedRequest, accessToken, puid, proxyUrl)
 		if err != nil {
+			fmt.Println("Continuing POSTConversation出错了,Error sending request")
 			c.JSON(500, gin.H{
 				"error": "error sending request",
 			})
@@ -238,6 +245,7 @@ func HandleRequestError(c *gin.Context, response *http.Response) bool {
 		if err != nil {
 			// Read response body
 			body, _ := io.ReadAll(response.Body)
+			fmt.Println("Unknown error: ", string(body))
 			c.JSON(500, gin.H{"error": gin.H{
 				"message": "Unknown error",
 				"type":    "internal_server_error",
@@ -247,6 +255,7 @@ func HandleRequestError(c *gin.Context, response *http.Response) bool {
 			}})
 			return true
 		}
+		fmt.Println("Error: ", response.Status, errorResponse["detail"])
 		c.JSON(response.StatusCode, gin.H{"error": gin.H{
 			"message": errorResponse["detail"],
 			"type":    response.Status,
