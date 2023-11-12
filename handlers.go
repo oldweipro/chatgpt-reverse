@@ -108,7 +108,7 @@ func chatCompletions(c *gin.Context) {
 
 	response, err := POSTConversation(translatedRequest, accessToken, puid, proxyUrl)
 	if err != nil {
-		fmt.Println("POSTConversation出错了,Error sending request")
+		fmt.Println("POSTConversation出错了,Error sending request", err.Error())
 		c.JSON(500, gin.H{
 			"error": "error sending request",
 		})
@@ -135,7 +135,7 @@ func chatCompletions(c *gin.Context) {
 		translatedRequest.ParentMessageID = continueInfo.ParentID
 		response, err = POSTConversation(translatedRequest, accessToken, puid, proxyUrl)
 		if err != nil {
-			fmt.Println("Continuing POSTConversation出错了,Error sending request")
+			fmt.Println("Continuing POSTConversation出错了,Error sending request", err.Error())
 			c.JSON(500, gin.H{
 				"error": "error sending request",
 			})
@@ -162,7 +162,7 @@ func ConvertAPIRequest(apiRequest APIRequest, puid string, proxyUrl string) Chat
 		chatgptRequest.ArkoseToken = token
 	} else {
 		fmt.Println("Error getting Arkose token: ", err)
-		return chatgptRequest
+		chatgptRequest.ArkoseToken = GetArkoseToken()
 	}
 	if strings.HasPrefix(apiRequest.Model, "gpt-3.5") {
 		chatgptRequest.Model = "text-davinci-002-render-sha"
@@ -255,7 +255,7 @@ func HandleRequestError(c *gin.Context, response *http.Response) bool {
 			}})
 			return true
 		}
-		fmt.Println("Error: ", response.Status, errorResponse["detail"])
+		fmt.Println("这难道是429:Error: ", response.Status, errorResponse["detail"])
 		c.JSON(response.StatusCode, gin.H{"error": gin.H{
 			"message": errorResponse["detail"],
 			"type":    response.Status,
@@ -363,4 +363,26 @@ func ConvertToString(chatgptResponse *ChatGPTResponse, previousText *StringStruc
 	previousText.Text = chatgptResponse.Message.Content.Parts[0]
 	return "data: " + translatedResponse.String() + "\n\n"
 
+}
+
+func GetArkoseToken() string {
+	response, err := http.Get(ArkoseTokenUrl)
+	if err != nil {
+		fmt.Println("请求失败:", err)
+	}
+	defer response.Body.Close()
+
+	var result map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&result)
+	if err != nil {
+		fmt.Println("解析失败:", err)
+	}
+
+	formattedResult := make(map[string]string)
+	for key, value := range result {
+		formattedResult[key] = fmt.Sprintf("%v", value)
+	}
+
+	arkoseToken := formattedResult["token"]
+	return arkoseToken
 }

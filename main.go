@@ -13,7 +13,8 @@ import (
 const (
 	Port = ":9333"
 	// ProxyUrl 如果不使用代理，设为空""即可
-	ProxyUrl = "http://127.0.0.1:7890"
+	ProxyUrl       = ""
+	ArkoseTokenUrl = "http://127.0.0.1:8386/token"
 	// DisableHistory 默认true不开启网页历史记录
 	DisableHistory = true
 )
