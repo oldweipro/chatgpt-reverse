@@ -10,6 +10,8 @@ import (
 	"github.com/bogdanfinn/tls-client/profiles"
 	"io"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	arkose "github.com/xqdoo00o/funcaptcha"
@@ -24,7 +26,44 @@ func optionsHandler(c *gin.Context) {
 		"message": "pong",
 	})
 }
+
+var queueMutex sync.Mutex
+
+func GetGPT4Account() MailAccount {
+	var mailAccount MailAccount
+	queueMutex.Lock()
+	defer queueMutex.Unlock()
+	err := DB.Where("openai_access_token!='' and openai_status=4").Order("openai_access_token_use_time").First(&mailAccount).Error
+	if err != nil {
+		fmt.Println(err)
+		return MailAccount{}
+	}
+	err = DB.Model(&MailAccount{}).Where("id = ?", mailAccount.ID).Update("openai_access_token_use_time", time.Now()).Error
+	return mailAccount
+}
+
 func chatCompletions(c *gin.Context) {
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		c.JSON(401, gin.H{"error": gin.H{
+			"message": "missing header parameter Authorization",
+			"type":    "invalid_request_error",
+			"param":   nil,
+			"code":    "",
+		}})
+		return
+	}
+	customAccessToken := strings.Replace(authHeader, "Bearer ", "", 1)
+	// Check if customAccessToken starts with sk-
+	if !strings.HasPrefix(customAccessToken, "E4k3xbrEDtMjYMyuQwwd02BffKG6WugI") {
+		c.JSON(401, gin.H{"error": gin.H{
+			"message": "missing header parameter Authorization",
+			"type":    "invalid_request_error",
+			"param":   nil,
+			"code":    "",
+		}})
+		return
+	}
 	proxyUrl := ProxyUrl
 	var originalRequest APIRequest
 	err := c.BindJSON(&originalRequest)
@@ -37,18 +76,8 @@ func chatCompletions(c *gin.Context) {
 		}})
 		return
 	}
-
-	authHeader := c.GetHeader("Authorization")
-	if authHeader == "" {
-		c.JSON(400, gin.H{"error": gin.H{
-			"message": "missing header parameter Authorization",
-			"type":    "invalid_request_error",
-			"param":   nil,
-			"code":    err.Error(),
-		}})
-		return
-	}
-	puid := c.GetHeader("PUid")
+	account := GetGPT4Account()
+	puid := account.OpenaiPuid
 	if puid == "" {
 		c.JSON(400, gin.H{"error": gin.H{
 			"message": "missing header parameter PUid",
@@ -58,14 +87,7 @@ func chatCompletions(c *gin.Context) {
 		}})
 		return
 	}
-	accessToken := ""
-	if authHeader != "" {
-		customAccessToken := strings.Replace(authHeader, "Bearer ", "", 1)
-		// Check if customAccessToken starts with sk-
-		if strings.HasPrefix(customAccessToken, "eyJhbGciOiJSUzI1NiI") {
-			accessToken = customAccessToken
-		}
-	}
+	accessToken := account.OpenaiAccessToken
 	if accessToken == "" {
 		c.JSON(400, gin.H{"error": gin.H{
 			"message": "wrong header parameter Authorization",
