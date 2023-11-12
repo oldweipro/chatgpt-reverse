@@ -3,11 +3,13 @@ module github.com/oldweipro/chatgpt-reverse
 go 1.21.0
 
 require (
+	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/bogdanfinn/fhttp v0.5.24
 	github.com/bogdanfinn/tls-client v1.6.1
 	github.com/fvbock/endless v0.0.0-20170109170031-447134032cb6
 	github.com/gin-gonic/gin v1.9.1
 	github.com/google/uuid v1.4.0
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/xqdoo00o/funcaptcha v0.0.0-20231102070546-ff50c2193e06
 	gorm.io/driver/mysql v1.5.2
 	gorm.io/gorm v1.25.5
@@ -15,6 +17,7 @@ require (
 
 require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
+	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/bogdanfinn/utls v1.5.16 // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect

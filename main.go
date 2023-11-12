@@ -18,6 +18,7 @@ const (
 	DisableHistory = true
 )
 
+var Timer = NewTimerTask()
 var DB *gorm.DB
 var m = Mysql{
 	Path:         "",
@@ -37,8 +38,9 @@ var m = Mysql{
 
 func main() {
 	DB = GormMysql()
+	TimerFunc()
 	if DB != nil {
-		RegisterTables()
+		//RegisterTables()
 		//程序结束前关闭数据库链接
 		db, _ := DB.DB()
 		defer func(db *sql.DB) {
