@@ -13,7 +13,7 @@ import (
 const (
 	Port = ":9333"
 	// ProxyUrl 如果不使用代理，设为空""即可
-	ProxyUrl = ""
+	ProxyUrl = "http://127.0.0.1:7890"
 	// DisableHistory 默认true不开启网页历史记录
 	DisableHistory = true
 )
@@ -21,12 +21,12 @@ const (
 var Timer = NewTimerTask()
 var DB *gorm.DB
 var m = Mysql{
-	Path:         "",
+	Path:         "127.0.0.1", // 主机地址127.0.0.1
 	Port:         "3306",
 	Config:       "charset=utf8mb4&parseTime=True&loc=Local",
-	Dbname:       "",
-	Username:     "",
-	Password:     "",
+	Dbname:       "chatgpt", // 数据库名称
+	Username:     "root",    // 用户名
+	Password:     "root",    // 密码
 	Prefix:       "",
 	Singular:     false,
 	Engine:       "",
@@ -50,7 +50,11 @@ func main() {
 			}
 		}(db)
 	}
+	select {}
+	//StartHttpServer()
+}
 
+func StartHttpServer() {
 	router := gin.Default()
 	router.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{

@@ -7,7 +7,7 @@ import (
 )
 
 func TimerFunc() {
-	_, err := Timer.AddTaskByFunc("SyncAccessToken", "0 0 1,5,10,15,20,25,28 * *", func() {
+	_, err := Timer.AddTaskByFunc("SyncAccessToken", "0 23 * * *", func() {
 		var accounts []MailAccount
 		err := DB.Where("openai_status!=0").Find(&accounts).Error
 		if err != nil {
