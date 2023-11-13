@@ -33,14 +33,18 @@ type chatgptAuthor struct {
 }
 
 type ChatGPTRequest struct {
-	Action                     string           `json:"action"`
-	Messages                   []chatgptMessage `json:"messages"`
-	ParentMessageID            string           `json:"parent_message_id,omitempty"`
-	ConversationID             string           `json:"conversation_id,omitempty"`
-	Model                      string           `json:"model"`
-	HistoryAndTrainingDisabled bool             `json:"history_and_training_disabled"`
-	ArkoseToken                string           `json:"arkose_token,omitempty"`
-	PluginIDs                  []string         `json:"plugin_ids,omitempty"`
+	Action                     string                 `json:"action"`
+	Messages                   []chatgptMessage       `json:"messages"`
+	ParentMessageID            string                 `json:"parent_message_id,omitempty"`
+	ConversationID             string                 `json:"conversation_id,omitempty"`
+	Model                      string                 `json:"model"`
+	HistoryAndTrainingDisabled bool                   `json:"history_and_training_disabled"`
+	ArkoseToken                string                 `json:"arkose_token,omitempty"`
+	ConversationMode           map[string]interface{} `json:"conversation_mode,omitempty"`
+	PluginIDs                  []string               `json:"plugin_ids,omitempty"`
+	Suggestions                []string               `json:"suggestions,omitempty"`
+	ForceParagen               bool                   `json:"force_paragen,omitempty"`
+	ForceRateLimit             bool                   `json:"force_rate_limit,omitempty"`
 }
 
 func NewChatGPTRequest() ChatGPTRequest {
@@ -50,6 +54,8 @@ func NewChatGPTRequest() ChatGPTRequest {
 		ParentMessageID:            uuid.NewString(),
 		Model:                      "text-davinci-002-render-sha",
 		HistoryAndTrainingDisabled: DisableHistory,
+		ForceParagen:               false,
+		ForceRateLimit:             false,
 	}
 }
 func (c *ChatGPTRequest) AddMessage(role string, content string) {

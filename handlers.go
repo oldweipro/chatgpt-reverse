@@ -24,6 +24,114 @@ func optionsHandler(c *gin.Context) {
 		"message": "pong",
 	})
 }
+func dalle(c *gin.Context) {
+	var originalRequest APIRequest
+	_ = c.BindJSON(&originalRequest)
+	accessToken := c.GetHeader("Authorization")
+	puid := c.GetHeader("PUid")
+	translatedRequest := NewChatGPTRequest()
+	token, err := arkose.GetOpenAIAuthToken(puid, ProxyUrl)
+	if err != nil {
+		fmt.Println("arkose 获取失败，再来")
+		return
+	}
+	translatedRequest.ArkoseToken = token
+	translatedRequest.Model = "gpt-4-gizmo"
+	jsonStr := `{
+    "gizmo": {
+      "id": "g-2fkFE8rbu",
+      "name": "DALL·E",
+      "author_name": "ChatGPT",
+      "author": {
+        "user_id": "user-u7SVk5APwT622QC7DPe41GHJ",
+        "display_name": "ChatGPT",
+        "link_to": null,
+        "selected_display": "name",
+        "is_verified": true
+      },
+      "config": {
+        "context_message": null,
+        "model_slug": null,
+        "assistant_welcome_message": "Hello",
+        "enabled_tools": [
+          {
+            "tool_id": "dalle"
+          }
+        ],
+        "files": [],
+        "tags": [
+          "public",
+          "first_party"
+        ]
+      },
+      "description": "Let me turn your imagination into imagery",
+      "owner_id": "user-u7SVk5APwT622QC7DPe41GHJ",
+      "updated_at": "2023-11-12T19:29:32.777742+00:00",
+      "profile_pic_permalink": "https://files.oaiusercontent.com/file-SxYQO0Fq1ZkPagkFtg67DRVb?se=2123-10-12T23%3A57%3A32Z&sp=r&sv=2021-08-06&sr=b&rscc=max-age%3D31536000%2C%20immutable&rscd=attachment%3B%20filename%3Dagent_3.webp&sig=pLlQh8oUktqQzhM09SDDxn5aakqFuM2FAPptuA0mbqc%3D",
+      "share_recipient": "marketplace",
+      "version": null,
+      "live_version": null,
+      "short_url": "g-2fkFE8rbu-dall-e",
+      "product_features": {
+        "attachments": {
+          "type": "retrieval",
+          "accepted_mime_types": [
+            "text/x-ruby",
+            "text/x-tex",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "application/msword",
+            "application/x-latext",
+            "text/x-typescript",
+            "text/x-script.python",
+            "text/x-c++",
+            "text/x-php",
+            "text/x-sh",
+            "text/plain",
+            "text/html",
+            "application/pdf",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "text/x-c",
+            "application/json",
+            "text/markdown",
+            "text/x-java",
+            "text/javascript",
+            "text/x-csharp"
+          ],
+          "image_mime_types": [
+            "image/gif",
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+          ],
+          "can_accept_all_mime_types": true
+        }
+      }
+    },
+    "kind": "gizmo_interaction",
+    "gizmo_id": "g-2fkFE8rbu"
+  }`
+	var data map[string]interface{}
+	_ = json.Unmarshal([]byte(jsonStr), &data)
+	translatedRequest.ConversationMode = data
+	for _, message := range originalRequest.Messages {
+		if message.Role == "system" {
+			message.Role = "critic"
+		}
+		translatedRequest.AddMessage(message.Role, message.Content)
+	}
+	marshal, _ := json.Marshal(translatedRequest)
+	fmt.Println(string(marshal))
+	response, _ := POSTConversation(translatedRequest, accessToken, puid, ProxyUrl)
+	fmt.Println(response.StatusCode)
+	fmt.Println(response.Status)
+	//HandleRequestError(c, response)
+	var continueInfo *ContinueInfo
+	var responsePart string
+	responsePart, continueInfo = Handler(c, response, true)
+	fmt.Println(continueInfo == nil)
+	fmt.Println(responsePart)
+	defer response.Body.Close()
+}
 func chatCompletions(c *gin.Context) {
 	proxyUrl := ProxyUrl
 	var originalRequest APIRequest
@@ -261,6 +369,8 @@ func Handler(c *gin.Context, response *http.Response, stream bool) (string, *Con
 	var isRole = true
 	for {
 		line, err := reader.ReadString('\n')
+		fmt.Println("打印每行数据")
+		fmt.Println(line)
 		if err != nil {
 			if err == io.EOF {
 				break

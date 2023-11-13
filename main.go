@@ -22,6 +22,7 @@ func main() {
 	})
 	router.OPTIONS("/v1/chat/completions", optionsHandler)
 	router.POST("/v1/chat/completions", chatCompletions)
+	router.POST("/v1/chat/dalle", dalle)
 
 	s := initServer(Port, router)
 	fmt.Println(s.ListenAndServe().Error())
