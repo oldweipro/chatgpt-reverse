@@ -162,7 +162,9 @@ func ConvertAPIRequest(apiRequest APIRequest, puid string, proxyUrl string) Chat
 		chatgptRequest.ArkoseToken = token
 	} else {
 		fmt.Println("Error getting Arkose token: ", err)
-		chatgptRequest.ArkoseToken = GetArkoseToken()
+		if ArkoseTokenUrl != "" {
+			chatgptRequest.ArkoseToken = GetArkoseToken()
+		}
 	}
 	if strings.HasPrefix(apiRequest.Model, "gpt-3.5") {
 		chatgptRequest.Model = "text-davinci-002-render-sha"
